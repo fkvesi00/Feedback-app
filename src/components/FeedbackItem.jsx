@@ -1,24 +1,22 @@
 import React from 'react'
 import Card from './shared/Card'
 import PropTypes from 'prop-types'
+import {FaTimes} from 'react-icons/fa'
 
-function FeedbackItem({item}) {
-    const handleClick = (rating) => {
-        console.log(rating)
-    }
+function FeedbackItem({item,handleDelete}) {
+  
 
   return (
     <Card >
         <div className="num-display">{item.rating}</div>
+        <button onClick={() => handleDelete(item.id)} className="close">
+          <FaTimes color='purple' />
+        </button>
         <div className="text-display">{item.text}</div>
-        <button onClick={() => handleClick(item.rating)}>Click</button>
     </Card>
   )
 }
 
-FeedbackItem.defaultProps = {
-  item : []
-}
 
 FeedbackItem.propTypes = {
   item: PropTypes.shape({
