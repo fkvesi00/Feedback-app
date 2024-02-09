@@ -1,44 +1,89 @@
-import { createContext, useState } from "react";
-import {v4 as uuidv4} from 'uuid'
+import { createContext, useState, useEffect } from "react";
 const FeedbackContext = createContext()
 
 export const FeedbackProvider = ({children}) => {
-    const [feedback, setfeedback] = useState([
-        {
-            id:1,
-            text:'This item is feedback item 1',
-            rating: 10
-        },
-        {
-            id:2,
-            text:'This item is feedback item 2',
-            rating: 7
-        },
-        {
-            id:3,
-            text:'This item is feedback item 3',
-            rating: 6
-        }
-    ])
+    const [isLoading, setIsLoading] = useState(true)
+    const [feedback, setfeedback] = useState([])
+    
 
-    const handleDelete = (id) => {
+    useEffect(()=>{
+       fetchFeedback()
+    },[])
+
+    const fetchFeedback = async() => {
+        const response = await fetch('/feedback')
+
+        const data = await response.json()
+        setfeedback(data)
+        setIsLoading(false)
+    }
+    
+    //uredeni komentar
+    const [feedbackEdit, setFeedbackEdit] = useState({
+        item: {},
+        edit: false
+    })
+
+    //brisanje komentara
+    const handleDelete = async(id) => {
         if(window.confirm('Are you sure you wont to delete')){
-          setfeedback(feedback.filter(feedback => feedback.id !== id))
-          
-        }
+            await fetch(`/feedback/${id}`, {method:'DELETE'})
+
+            setfeedback(feedback.filter(feedback => feedback.id !== id)) 
+          }
       }
     
-      const addFeedback = newFeedback => {
-        newFeedback.id = uuidv4()
+      //dodavanje komentara
+      const addFeedback =async (newFeedback) => {
+        const response = await fetch('/feedback', {
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+
+            },
+            body: JSON.stringify(newFeedback)
+        })
+
+        const feedbackData = response.json()
     
-        setfeedback([newFeedback,...feedback])
+        setfeedback([feedbackData,...feedback])
       }
     
+      //uredivanje komentara
+      const editFeedback = item =>{
+        setFeedbackEdit({
+            item,
+            edit:true
+        })
+
+        console.log(feedbackEdit)
+      }
+
+      //postavljanje uredenog komentara unutar ostalih komentara
+      const updateFeedback =async (id, updItem) => {
+        const response = await fetch(`/feedback/${id}`,{
+            method:'PUT',
+            headers:{
+                'Content-Type':'Application/json'
+            },
+            body:JSON.stringify(updItem)
+        })
+
+        const data = await response.json()
+
+       setfeedback(feedback.map(feedback=>{
+        return feedback.id === id ? {...feedback, ...data} : feedback
+       }))
+      }
 
     return <FeedbackContext.Provider value={{
         feedback,
+        feedbackEdit,
+        isLoading,
         handleDelete,
-        addFeedback
+        addFeedback,
+        editFeedback,
+        updateFeedback
     }}>
         {children}
     </FeedbackContext.Provider>
